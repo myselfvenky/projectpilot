@@ -1,0 +1,325 @@
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+:root .modal-overlay,
+[data-theme="light"] .modal-overlay {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.modal {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 1rem;
+  padding: 2rem;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  transform: scale(1);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+[data-theme="dark"] .modal {
+  background: rgba(45, 55, 72, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal h2 {
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+/* Form styles */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
+}
+
+/* Removed dark mode styles from here - moved to end of file for proper specificity */
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group textarea,
+[data-theme="dark"] .form-group select {
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+[data-theme="dark"] .form-group input::placeholder,
+[data-theme="dark"] .form-group textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.9;
+}
+
+.path-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.path-input-group input {
+  flex: 1;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+/* Icon selector styles */
+.icon-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(3rem, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.icon-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border: 2px solid var(--border-color);
+  border-radius: 0.5rem;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.icon-option:hover {
+  border-color: var(--accent-color);
+  background: var(--accent-light);
+  color: var(--accent-color);
+  transform: scale(1.05);
+}
+
+.icon-option.selected {
+  border-color: var(--accent-color);
+  background: var(--accent-gradient);
+  color: white;
+  box-shadow: 0 4px 12px var(--accent-light);
+}
+
+.icon-option svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Select with icon styles */
+.select-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.select-icon {
+  position: absolute;
+  left: 0.75rem;
+  z-index: 1;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+}
+
+/* Dark mode select icon moved to end of file for proper specificity */
+
+.select-with-icon select {
+  padding-left: 2.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  background: transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary {
+  background: var(--accent-gradient);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+}
+
+/* Light mode specific improvements for modal */
+:root .modal .btn-secondary,
+[data-theme="light"] .modal .btn-secondary {
+  background: rgba(248, 250, 252, 0.9);
+  color: #4a5568;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+:root .modal .btn-secondary:hover,
+[data-theme="light"] .modal .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.95);
+  color: #1a202c;
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Ensure form labels are visible in light mode */
+:root .modal .form-group label,
+[data-theme="light"] .modal .form-group label {
+  color: #2d3748 !important;
+  font-weight: 600;
+}
+
+:root .modal h2,
+[data-theme="light"] .modal h2 {
+  color: #1a202c !important;
+  font-weight: 700;
+}
+
+/* Ensure input text is dark in light mode */
+:root .modal .form-group input,
+:root .modal .form-group textarea,
+:root .modal .form-group select,
+[data-theme="light"] .modal .form-group input,
+[data-theme="light"] .modal .form-group textarea,
+[data-theme="light"] .modal .form-group select {
+  color: #1a202c !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 2px solid rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Select icon color in light mode */
+:root .modal .select-icon,
+[data-theme="light"] .modal .select-icon {
+  color: #4a5568 !important;
+}
+
+/* ========== DARK MODE OVERRIDES (Must be at end for proper specificity) ========== */
+
+/* Dark mode form labels - highest specificity */
+[data-theme="dark"] .modal-overlay .modal .form-group label {
+  color: #f7fafc !important;
+  font-weight: 600 !important;
+}
+
+/* Dark mode modal headings */
+[data-theme="dark"] .modal-overlay .modal h2 {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+/* Dark mode select icon */
+[data-theme="dark"] .modal-overlay .modal .select-icon {
+  color: #cbd5e0 !important;
+}
+
+/* Dark mode form inputs text */
+[data-theme="dark"] .modal-overlay .modal .form-group input,
+[data-theme="dark"] .modal-overlay .modal .form-group textarea,
+[data-theme="dark"] .modal-overlay .modal .form-group select {
+  color: #f7fafc !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Dark mode placeholder text */
+[data-theme="dark"] .modal-overlay .modal .form-group input::placeholder,
+[data-theme="dark"] .modal-overlay .modal .form-group textarea::placeholder {
+  color: #a0aec0 !important;
+  opacity: 0.8 !important;
+} 

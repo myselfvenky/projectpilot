@@ -1,0 +1,48 @@
+.theme-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.color-theme-selector {
+  position: relative;
+}
+
+.theme-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.theme-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+  transform: scale(1.05);
+}
+
+.theme-btn .icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  transition: color 0.3s ease;
+}
+
+.theme-btn[title*="color"] .icon::after {
+  content: '';
+  position: absolute;
+  bottom: 0.25rem;
+  right: 0.25rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  border: 2px solid var(--bg-primary);
+  transition: background 0.3s ease;
+} 

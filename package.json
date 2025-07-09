@@ -1,0 +1,93 @@
+{
+  "name": "devlaunch",
+  "version": "1.0.0",
+  "description": "A beautiful cross-platform launcher to manage and open your coding projects with style",
+  "main": "build/electron.js",
+  "homepage": "./",
+  "scripts": {
+    "start": "electron .",
+    "dev": "PORT=${PORT:-3333} concurrently \"npm run react-start\" \"wait-on http://localhost:${PORT:-3333} && PORT=${PORT:-3333} electron .\"",
+    "react-start": "react-scripts start",
+    "react-build": "react-scripts build",
+    "copy-electron": "node build-scripts/copy-electron-files.js",
+    "install-native-deps": "echo 'Installing native dependencies...'",
+    "build": "npm run react-build && npm run copy-electron && electron-builder",
+    "build-mac": "npm run react-build && npm run copy-electron && electron-builder --mac",
+    "build-win": "npm run react-build && npm run copy-electron && electron-builder --win",
+    "dist": "npm run react-build && npm run copy-electron && electron-builder --publish=never"
+  },
+  "build": {
+    "appId": "com.devlaunch.app",
+    "productName": "DevLaunch",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "build/**/*",
+      "node_modules/**/*",
+      "!node_modules/.cache"
+    ],
+    "mac": {
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.developer-tools"
+    },
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": {
+        "target": "nsis",
+        "arch": ["x64", "ia32"]
+      }
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "icon": "assets/icon.png",
+      "category": "Development"
+    },
+    "nodeGypRebuild": false,
+    "buildDependenciesFromSource": false,
+    "npmRebuild": false
+  },
+  "keywords": [
+    "project",
+    "navigator",
+    "developer",
+    "tools",
+    "electron"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^7.6.0",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "wait-on": "^7.2.0"
+  },
+  "dependencies": {
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "lucide-react": "^0.300.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^12.1.1",
+    "sqlite3": "^5.1.6"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
