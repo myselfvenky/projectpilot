@@ -1,5 +1,5 @@
 {
-  "name": "devlaunch",
+  "name": "project-pilot",
   "version": "1.0.0",
   "description": "A beautiful cross-platform launcher to manage and open your coding projects with style",
   "main": "build/electron.js",
@@ -17,8 +17,8 @@
     "dist": "npm run react-build && npm run copy-electron && electron-builder --publish=never"
   },
   "build": {
-    "appId": "com.devlaunch.app",
-    "productName": "DevLaunch",
+    "appId": "com.projectpilot.app",
+    "productName": "Project Pilot",
     "directories": {
       "output": "dist"
     },
