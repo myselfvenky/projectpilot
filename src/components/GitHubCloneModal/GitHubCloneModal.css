@@ -1,0 +1,142 @@
+/* Extend base modal styles with GitHub clone specific styles */
+@import '../ProjectModal/ProjectModal.css';
+
+/* GitHub Clone Modal specific styles */
+.github-clone-modal {
+  max-width: 550px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.modal-header .icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--accent-color);
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+/* Clone progress styles */
+.clone-progress {
+  text-align: center;
+  padding: 2rem;
+}
+
+.progress-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  color: var(--accent-color);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.clone-progress p {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* Input error styles */
+.form-group input.error {
+  border-color: #e53e3e !important;
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1) !important;
+}
+
+.input-error {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  color: #e53e3e;
+  font-size: 0.75rem;
+}
+
+.input-error .icon-small {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+}
+
+.input-hint {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Small icon styles */
+.icon-small {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Button with icon styles */
+.btn .icon-small {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+/* Disabled button styles */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .input-error {
+  color: #fc8181;
+}
+
+[data-theme="dark"] .input-hint {
+  color: #a0aec0;
+}
+
+[data-theme="dark"] .modal-header h2 {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .clone-progress p {
+  color: #cbd5e0;
+}
+
+/* Light mode adjustments */
+:root .modal-header h2,
+[data-theme="light"] .modal-header h2 {
+  color: #1a202c !important;
+}
+
+:root .input-hint,
+[data-theme="light"] .input-hint {
+  color: #718096;
+}
+
+:root .clone-progress p,
+[data-theme="light"] .clone-progress p {
+  color: #4a5568;
+} 

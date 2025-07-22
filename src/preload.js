@@ -24,5 +24,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   enableWindowMovement: () => ipcRenderer.invoke('enable-window-movement'),
   
   // External links
-  openExternal: (url) => ipcRenderer.invoke('open-external', url)
+  openExternal: (url) => ipcRenderer.invoke('open-external', url),
+  
+  // GitHub clone operations
+  cloneRepository: (cloneData) => ipcRenderer.invoke('clone-repository', cloneData),
+  
+  // Diagnostics
+  runDiagnostics: () => ipcRenderer.invoke('run-diagnostics')
 }); 

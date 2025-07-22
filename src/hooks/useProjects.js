@@ -72,18 +72,50 @@ export const useProjects = () => {
       const editorToUse = editor || project.defaultEditor || selectedEditor;
       const editorInfo = availableEditors.find(e => e.id === editorToUse);
       
-      if (!editorInfo?.isInstalled) {
-        alert(`${editorInfo?.name || 'Editor'} is not installed on your system. Please install it first or choose a different editor.`);
+      if (!editorToUse) {
+        alert('No editor selected. Please choose an editor to open the project.');
         return;
       }
       
+      if (!editorInfo) {
+        alert(`Editor '${editorToUse}' is not recognized. Please choose a different editor.`);
+        return;
+      }
+      
+      if (!editorInfo?.isInstalled) {
+        const errorMessage = `${editorInfo.name} is not installed on your system.\n\n` +
+          `To fix this:\n` +
+          `1. Install ${editorInfo.name}\n` +
+          `2. Make sure the '${editorInfo.command}' command is available in your PATH\n` +
+          `3. Or choose a different editor from the dropdown`;
+        alert(errorMessage);
+        return;
+      }
+      
+      console.log(`Opening project "${project.name}" with ${editorInfo.name}...`);
       const result = await window.electronAPI.openProject(project.path, editorToUse);
+      
       if (!result.success) {
-        alert(`Failed to open project: ${result.error}`);
+        console.error('Failed to open project:', result.error);
+        
+        // Provide specific guidance based on the error
+        let userMessage = `Failed to open project in ${editorInfo.name}:\n\n${result.error}`;
+        
+        if (result.error.includes('not found in PATH')) {
+          userMessage += `\n\nTo fix this:\n` +
+            `1. Make sure ${editorInfo.name} is properly installed\n` +
+            `2. Add the '${editorInfo.command}' command to your system PATH\n` +
+            `3. Restart Project Pilot after fixing the PATH\n` +
+            `4. Or try selecting a different editor`;
+        }
+        
+        alert(userMessage);
+      } else {
+        console.log(`Successfully opened project "${project.name}" in ${editorInfo.name}`);
       }
     } catch (error) {
       console.error('Failed to open project:', error);
-      alert('Failed to open project');
+      alert(`An unexpected error occurred while opening the project:\n\n${error.message}`);
     }
   };
 

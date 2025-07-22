@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Header from './components/Header/Header';
 import ProjectCard from './components/ProjectCard/ProjectCard';
 import ProjectModal from './components/ProjectModal/ProjectModal';
+import GitHubCloneModal from './components/GitHubCloneModal/GitHubCloneModal';
 import Watermark from './components/Watermark/Watermark';
 import { useProjects } from './hooks/useProjects';
 import { useTheme } from './hooks/useTheme';
@@ -13,6 +14,7 @@ function App() {
   const [filteredProjects, setFilteredProjects] = useState([]);
   const [selectedEditor, setSelectedEditor] = useState('vscode');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showCloneModal, setShowCloneModal] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   
   // Drag and drop state
@@ -84,6 +86,28 @@ function App() {
   const handleModalClose = () => {
     setShowAddForm(false);
     setEditingProject(null);
+  };
+
+  // Handle GitHub clone modal
+  const handleCloneModalClose = () => {
+    setShowCloneModal(false);
+  };
+
+  // Handle GitHub clone submission
+  const handleCloneSubmit = async (projectData) => {
+    try {
+      const success = await saveProject(projectData);
+      if (success) {
+        await loadProjects();
+        setShowCloneModal(false);
+        console.log('✅ Cloned project added successfully:', projectData.name);
+      } else {
+        alert('Failed to save cloned project. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error saving cloned project:', error);
+      alert(`Failed to save cloned project: ${error.message}`);
+    }
   };
 
   // Drag and drop handlers
@@ -158,6 +182,7 @@ function App() {
         onToggleDarkMode={toggleDarkMode}
         onCycleColorTheme={cycleColorTheme}
         onAddProject={() => setShowAddForm(true)}
+        onCloneProject={() => setShowCloneModal(true)}
       />
 
       <main className="main">
@@ -205,6 +230,14 @@ function App() {
         availableEditors={availableEditors}
         onSubmit={handleProjectSubmit}
         onClose={handleModalClose}
+        onSelectFolder={selectProjectFolder}
+      />
+
+      <GitHubCloneModal
+        isOpen={showCloneModal}
+        availableEditors={availableEditors}
+        onSubmit={handleCloneSubmit}
+        onClose={handleCloneModalClose}
         onSelectFolder={selectProjectFolder}
       />
 

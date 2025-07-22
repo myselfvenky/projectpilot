@@ -438,12 +438,42 @@ ipcMain.handle('open-external', async (event, url) => {
       }
       
       console.log(`🔄 Fallback: trying ${command} with args:`, args);
-      const { spawn } = require('child_process');
-      const child = spawn(command, args, { detached: true, stdio: 'ignore' });
-      child.unref();
       
-      console.log('✅ Successfully opened URL with fallback method');
-      return { success: true };
+      return new Promise((resolve) => {
+        const { spawn } = require('child_process');
+        
+        // Windows-specific spawn options
+        let spawnOptions = { detached: true, stdio: 'ignore' };
+        if (process.platform === 'win32') {
+          spawnOptions = {
+            ...spawnOptions,
+            shell: true,
+            windowsHide: true
+          };
+        }
+        
+        const child = spawn(command, args, spawnOptions);
+        
+        child.on('error', (spawnError) => {
+          console.error(`Fallback spawn error:`, spawnError);
+          resolve({ success: false, error: `Primary: ${error.message}, Fallback: ${spawnError.message}` });
+        });
+        
+        child.on('spawn', () => {
+          console.log('✅ Successfully opened URL with fallback method');
+          child.unref();
+          resolve({ success: true });
+        });
+        
+        // Timeout fallback
+        setTimeout(() => {
+          if (!child.killed) {
+            child.unref();
+            resolve({ success: true });
+          }
+        }, 2000); // Increased timeout for Windows
+      });
+      
     } catch (fallbackError) {
       console.error('Fallback method also failed:', fallbackError);
       return { success: false, error: `Primary: ${error.message}, Fallback: ${fallbackError.message}` };
@@ -549,31 +579,107 @@ ipcMain.handle('open-project', async (event, projectPath, editorId) => {
     if (process.platform === 'darwin' && editor.macApp) {
       // On macOS, try using 'open' command first
       try {
-        spawn('open', ['-a', editor.macApp, projectPath], options);
-        return { success: true };
+        return new Promise((resolve) => {
+          const child = spawn('open', ['-a', editor.macApp, projectPath], options);
+          
+          child.on('error', (error) => {
+            console.log(`Failed to open with 'open' command, trying command line: ${error.message}`);
+            // Continue to command line approach
+            resolve(null);
+          });
+          
+          child.on('spawn', () => {
+            console.log(`Successfully opened project with macOS 'open' command`);
+            child.unref();
+            resolve({ success: true });
+          });
+          
+          // Timeout to continue to command line if no response
+          setTimeout(() => {
+            if (!child.killed) {
+              child.unref();
+              resolve({ success: true });
+            }
+          }, 1000);
+        }).then(result => {
+          if (result) return result;
+          // If null returned, continue to command line approach below
+        });
       } catch (error) {
         console.log(`Failed to open with 'open' command, trying command line: ${error.message}`);
       }
     }
 
-    // Try command line approach
-    try {
-      const command = editor.command;
-      const args = [projectPath];
-      const child = spawn(command, args, options);
-      
-      child.on('error', (error) => {
-        if (error.code === 'ENOENT') {
-          throw new Error(`${editor.name} command '${command}' not found in PATH`);
+    // Try command line approach with proper error handling
+    return new Promise((resolve, reject) => {
+      try {
+        const command = editor.command;
+        const args = [projectPath];
+        
+        // Windows-specific spawn options
+        let spawnOptions = { detached: true, stdio: 'ignore' };
+        
+        // On Windows, we need to handle .cmd and .bat files differently
+        if (process.platform === 'win32') {
+          spawnOptions = {
+            ...spawnOptions,
+            shell: true, // Important for Windows to handle .cmd/.bat files
+            windowsHide: true // Hide the command window
+          };
         }
-        throw error;
-      });
+        
+        console.log(`Attempting to spawn ${command} with args:`, args, 'on platform:', process.platform);
+        
+        const child = spawn(command, args, spawnOptions);
+        
+        // Handle spawn errors properly
+        child.on('error', (error) => {
+          console.error(`Error spawning ${editor.name}:`, error);
+          if (error.code === 'ENOENT') {
+            resolve({ 
+              success: false, 
+              error: `${editor.name} command '${command}' not found in PATH. Please install ${editor.name} and ensure its command-line tool is available, or try a different editor.` 
+            });
+          } else {
+            resolve({ 
+              success: false, 
+              error: `Failed to launch ${editor.name}: ${error.message}` 
+            });
+          }
+        });
 
-      child.unref();
-      return { success: true };
-    } catch (error) {
-      throw new Error(`Failed to launch ${editor.name}: ${error.message}`);
-    }
+        // Handle successful spawn
+        child.on('spawn', () => {
+          console.log(`Successfully spawned ${editor.name} for project: ${projectPath}`);
+          child.unref();
+          resolve({ success: true });
+        });
+
+        // Handle process close/exit (for better Windows compatibility)
+        child.on('close', (code) => {
+          if (code !== null && code !== 0) {
+            console.warn(`${editor.name} process exited with code ${code}`);
+            // Don't treat non-zero exit codes as failures for editors
+            // as some editors return non-zero codes even when successful
+          }
+        });
+
+        // Set a timeout to resolve successfully if no error occurs within reasonable time
+        setTimeout(() => {
+          if (!child.killed) {
+            child.unref();
+            resolve({ success: true });
+          }
+        }, 2000); // Increased timeout for Windows
+
+      } catch (error) {
+        console.error(`Failed to spawn ${editor.name}:`, error);
+        resolve({ 
+          success: false, 
+          error: `Failed to launch ${editor.name}: ${error.message}` 
+        });
+      }
+    });
 
   } catch (error) {
     console.error('Error opening project:', error);
@@ -632,9 +738,11 @@ const checkCommand = async (command) => {
   try {
     await new Promise((resolve, reject) => {
       const checkCmd = process.platform === 'win32' ? 'where' : 'which';
-      exec(`${checkCmd} ${command}`, (error, stdout) => {
+      const execOptions = process.platform === 'win32' ? { shell: true, windowsHide: true } : {};
+      
+      exec(`${checkCmd} ${command}`, execOptions, (error, stdout) => {
         if (error || !stdout.trim()) {
-          reject(error);
+          reject(error || new Error(`Command ${command} not found`));
         } else {
           resolve();
         }
@@ -642,6 +750,7 @@ const checkCommand = async (command) => {
     });
     return true;
   } catch (error) {
+    console.log(`Command '${command}' not found:`, error.message);
     return false;
   }
 };
@@ -874,4 +983,200 @@ ipcMain.handle('get-available-editors', async () => {
 
   console.log('Detected editors:', editorsWithStatus.filter(e => e.isInstalled).map(e => e.name));
   return editorsWithStatus;
+}); 
+
+// Diagnostic handler for troubleshooting Windows issues
+ipcMain.handle('run-diagnostics', async () => {
+  console.log('🔍 Running system diagnostics...');
+  
+  const diagnostics = {
+    platform: process.platform,
+    arch: process.arch,
+    nodeVersion: process.version,
+    electronVersion: process.versions.electron,
+    userInfo: os.userInfo(),
+    env: {
+      PATH: process.env.PATH,
+      USERPROFILE: process.env.USERPROFILE,
+      APPDATA: process.env.APPDATA,
+      LOCALAPPDATA: process.env.LOCALAPPDATA
+    },
+    commands: {},
+    errors: []
+  };
+  
+  // Test common commands
+  const commandsToTest = ['code', 'cursor', 'cmd', 'where', 'git'];
+  
+  for (const cmd of commandsToTest) {
+    try {
+      const available = await checkCommand(cmd);
+      diagnostics.commands[cmd] = available;
+      console.log(`Command '${cmd}': ${available ? 'AVAILABLE' : 'NOT FOUND'}`);
+    } catch (error) {
+      diagnostics.commands[cmd] = false;
+      diagnostics.errors.push(`Error checking '${cmd}': ${error.message}`);
+      console.error(`Error checking '${cmd}':`, error);
+    }
+  }
+  
+  // Test spawn operation
+  try {
+    console.log('🧪 Testing spawn operation...');
+    const testResult = await new Promise((resolve) => {
+      const { spawn } = require('child_process');
+      
+      let spawnOptions = { detached: true, stdio: 'ignore' };
+      if (process.platform === 'win32') {
+        spawnOptions = {
+          ...spawnOptions,
+          shell: true,
+          windowsHide: true
+        };
+      }
+      
+      const child = spawn('echo', ['test'], spawnOptions);
+      
+      child.on('error', (error) => {
+        resolve({ success: false, error: error.message });
+      });
+      
+      child.on('spawn', () => {
+        child.unref();
+        resolve({ success: true });
+      });
+      
+      setTimeout(() => {
+        resolve({ success: false, error: 'Timeout' });
+      }, 5000);
+    });
+    
+    diagnostics.spawnTest = testResult;
+    console.log('Spawn test result:', testResult);
+  } catch (error) {
+    diagnostics.spawnTest = { success: false, error: error.message };
+    diagnostics.errors.push(`Spawn test error: ${error.message}`);
+    console.error('Spawn test error:', error);
+  }
+  
+  console.log('🔍 Diagnostics complete');
+  return diagnostics;
+}); 
+
+// Clone repository from GitHub
+ipcMain.handle('clone-repository', async (event, { url, destinationPath, projectName }) => {
+  try {
+    console.log(`🌀 Starting clone: ${url} -> ${destinationPath}/${projectName}`);
+    
+    // Validate inputs
+    if (!url || !destinationPath || !projectName) {
+      throw new Error('Missing required parameters: url, destinationPath, or projectName');
+    }
+    
+    // Check if destination path exists
+    if (!fs.existsSync(destinationPath)) {
+      throw new Error(`Destination path does not exist: ${destinationPath}`);
+    }
+    
+    // Check if git is available
+    const gitAvailable = await checkCommand('git');
+    if (!gitAvailable) {
+      throw new Error('Git is not installed or not available in PATH. Please install Git first.');
+    }
+    
+    // Create full project path
+    const projectPath = path.join(destinationPath, projectName);
+    
+    // Check if project directory already exists
+    if (fs.existsSync(projectPath)) {
+      throw new Error(`Directory already exists: ${projectPath}. Please choose a different name or remove the existing directory.`);
+    }
+    
+    console.log(`📁 Cloning to: ${projectPath}`);
+    
+    // Execute git clone
+    return new Promise((resolve, reject) => {
+      const args = ['clone', url, projectPath];
+      
+      // Platform-specific spawn options
+      let spawnOptions = { 
+        cwd: destinationPath,
+        stdio: ['ignore', 'pipe', 'pipe'] // Capture stdout and stderr
+      };
+      
+      if (process.platform === 'win32') {
+        spawnOptions.shell = true;
+        spawnOptions.windowsHide = true;
+      }
+      
+      console.log(`🚀 Executing: git ${args.join(' ')}`);
+      
+      const gitProcess = spawn('git', args, spawnOptions);
+      
+      let stdout = '';
+      let stderr = '';
+      
+      gitProcess.stdout.on('data', (data) => {
+        stdout += data.toString();
+        console.log(`Git stdout: ${data.toString().trim()}`);
+      });
+      
+      gitProcess.stderr.on('data', (data) => {
+        stderr += data.toString();
+        console.log(`Git stderr: ${data.toString().trim()}`);
+      });
+      
+      gitProcess.on('error', (error) => {
+        console.error('Git process error:', error);
+        reject(new Error(`Failed to start git process: ${error.message}`));
+      });
+      
+      gitProcess.on('close', (code) => {
+        console.log(`Git process exited with code: ${code}`);
+        
+        if (code === 0) {
+          // Success - verify the directory was created
+          if (fs.existsSync(projectPath)) {
+            console.log('✅ Repository cloned successfully');
+            resolve({
+              success: true,
+              projectPath: projectPath,
+              output: stdout
+            });
+          } else {
+            reject(new Error('Clone completed but project directory was not created'));
+          }
+        } else {
+          // Error - parse git error message
+          let errorMessage = 'Git clone failed';
+          
+          if (stderr.includes('not found') || stderr.includes('does not exist')) {
+            errorMessage = 'Repository not found. Please check the URL and try again.';
+          } else if (stderr.includes('Permission denied') || stderr.includes('access denied')) {
+            errorMessage = 'Permission denied. You may need to authenticate or check repository access.';
+          } else if (stderr.includes('Network is unreachable') || stderr.includes('timeout')) {
+            errorMessage = 'Network error. Please check your internet connection and try again.';
+          } else if (stderr.includes('already exists')) {
+            errorMessage = 'Directory already exists. Please choose a different name.';
+          } else if (stderr) {
+            errorMessage = `Git error: ${stderr.trim()}`;
+          }
+          
+          reject(new Error(errorMessage));
+        }
+      });
+      
+      // Set timeout for long-running clones
+      setTimeout(() => {
+        if (!gitProcess.killed) {
+          gitProcess.kill();
+          reject(new Error('Clone operation timed out after 5 minutes. The repository may be too large.'));
+        }
+      }, 300000); // 5 minutes timeout
+    });
+    
+  } catch (error) {
+    console.error('Clone repository error:', error);
+    return { success: false, error: error.message };
+  }
 }); 
